@@ -153,28 +153,7 @@ public class BuilderUtils {
   }
 
   public static boolean isBuildable(TypeRef typeRef) {
-    if (isRegisteredAsBuildable(typeRef) && canBeBuilt(typeRef)) {
-      return true;
-    }
-    if (!(typeRef instanceof ClassRef)) {
-      return false;
-    }
-    // Fallback for cross-module @BuildableReference: check if a sundrio-generated *Builder exists
-    // on the APT classpath. @Buildable has SOURCE retention so compiled JARs don't carry it;
-    // using getTypeElement() is the only JDK-version-agnostic way to detect a pre-compiled builder.
-    // We verify it's a sundrio builder (not e.g. java.lang.StringBuilder or ProcessBuilder) by
-    // checking it declares a build() method.
-    String builderFQCN = ((ClassRef) typeRef).getFullyQualifiedName() + "Builder";
-    Elements elements = BuilderContextManager.getContext().getElements();
-    if (elements == null) {
-      return false;
-    }
-    TypeElement builderElement = elements.getTypeElement(builderFQCN);
-    if (builderElement == null) {
-      return false;
-    }
-    return builderElement.getEnclosedElements().stream()
-        .anyMatch(e -> e.getKind() == ElementKind.METHOD && e.getSimpleName().contentEquals("build"));
+    return isRegisteredAsBuildable(typeRef) && canBeBuilt(typeRef);
   }
 
   public static boolean isRegisteredAsBuildable(TypeDef typeDef) {
@@ -199,13 +178,7 @@ public class BuilderUtils {
     String builderFQCN = ref.getFullyQualifiedName() + "Builder";
     TypeDef builder = BuilderContextManager.getContext().getDefinitionRepository().getDefinition(builderFQCN);
     if (builder == null) {
-      Elements elements = BuilderContextManager.getContext().getElements();
-      if (elements == null) {
-        return false;
-      }
-      TypeElement builderElement = elements.getTypeElement(builderFQCN);
-      return builderElement != null && builderElement.getEnclosedElements().stream()
-          .anyMatch(e -> e.getKind() == ElementKind.METHOD && e.getSimpleName().contentEquals("build"));
+      return false;
     }
 
     return builder.getMethods()
